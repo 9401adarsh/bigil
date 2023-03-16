@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>Cloud Deduplication</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" rel="stylesheet">    
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"></script>
+
+  </head>
+  <style>
+
+  </style>
+  <body>
+    <div class="container">
+        <div class="row" style="text-align:center; border-bottom:1px dashed #ccc;  padding:30px 0 20px 0; margin-bottom:40px;">
+            <div class="col-lg-12">
+            <h3 style="font-family:'Calibri', arial; font-weight:bold; font-size:30px;">
+                <a style="text-decoration:none; color:#666;" href="http://michaelsoriano.com/create-a-responsive-photo-gallery-with-bootstrap-framework/">Cloud Deduplication - Exact Image Match</a>
+            </h3>
+            </div>
+        </div>
+
+        <div>
+            <div class="wrapper">
+                <h4 class="mb-4">Upload Image</h4>
+                <form
+                  method="post"
+                  action="/dashboard"
+                  enctype="multipart/form-data"
+                  id="filepicker"
+                >
+                  <div class="file-form-item">
+                    <div id="pickingarea">
+                      <input
+                        type="file"
+                        class="file-input"
+                        id="browser"
+                        name="file"
+                        autocomplete="off"
+                      />
+                      <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <section class="uploaded-area"></section>
+                  </div>
+                  <div class="my-4"></div>
+                  <button type="submit mt-4" value="Submit">Upload</button>
+                </form>
+              </div>
+        </div>
+
+        <hr />
+
+        <!-- <div class="mt-4"><h4 class="text-success">Successfully uploaded</h4></div> -->
+
+        <!-- <div class="mt-4"><h4 class="text-danger">Failed to upload</h4></div> -->
+
+        <div class="mt-4"><h4 class="text-warning">Duplicate image detected - Not uploaded</h4></div> 
+        <p>Matching with</p>
+        <p>Image Hash: 99c3da0162b5bb25025785f9cfcc014c80e0990f274c1719321079b7c15a0582</p>
+        <p>Owner Signature: dd83217c19e4a388e1b6ed7e712194ea4923302c030eb25ce759dd611e4eaa75</p>
+
+
+
+        <hr />
+
+        <div class="row">
+            <div class="col-sm">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Vincent_van_Gogh_-_Self-Portrait_-_Google_Art_Project.jpg/197px-Vincent_van_Gogh_-_Self-Portrait_-_Google_Art_Project.jpg">
+                <p>Image Hash: 99c3da0162b5bb25025785f9cfcc014c80e0990f274c1719321079b7c15a0582</p>
+                <p>Owner Signature: dd83217c19e4a388e1b6ed7e712194ea4923302c030eb25ce759dd611e4eaa75</p>
+            </div>
+            <div class="col-sm">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/303px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg">
+              <p>Image Hash: 27b8426422778f7d96ed15551289f1288c35e91f9c17a968435dc771e521e3cd</p>
+                <p>Owner Signature: 7b35d2f99353e77ed852b1bd658e795b2b8759daa0dd43ffeda9796ba01e0591</p>
+          </div> 
+          </div>
+
+    </div> <!-- /container -->
+
+  </body>
+
+
+</html>
