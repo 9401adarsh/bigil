@@ -2,9 +2,13 @@
 <html>
   <head>
     <title>Hello, Flask!</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   </head>
   <body>
     <h1>Hello, Flask!</h1>
+    <h3>Connect Your MetaMask Wallet Here!</h3>
+    <button id="connectWallet" onclick="">Connect Wallet</button>
+    <p id="walletAddress"></p>
     <form method="POST" enctype="multipart/form-data">
       <label for="image_file">Select an image:</label>
       <input type="file" name="image_file" id="image_file" />
@@ -14,5 +18,82 @@
       <br />
       <button type="submit">Submit</button>
     </form>
+    <script type="text/javascript">
+      window.userWalletAddress = null;
+      const connectWallet = document.getElementById("connectWallet");
+      const walletAddress = document.getElementById("walletAddress");
+
+      function checkInstalled() {
+        if (typeof window.ethereum == "undefined") {
+          connectWallet.innerText =
+            "MetaMask isnt installed, please install it";
+          connectWallet.classList.remove();
+          connectWallet.classList.add();
+          return false;
+        }
+        connectWallet.addEventListener("click", connectWalletwithMetaMask);
+      }
+
+      async function connectWalletwithMetaMask() {
+        const accounts = await window.ethereum
+          .request({ method: "eth_requestAccounts" })
+          .catch((e) => {
+            console.error(e.message);
+            return;
+          });
+
+        if (!accounts) {
+          return;
+        }
+
+        window.userWalletAddress = accounts[0];
+        walletAddress.innerText = window.userWalletAddress;
+        // make an axios call to the backend to send the wallet address
+        axios
+          .post("http://127.0.0.1:5000/api/wallet", {
+            walletAddress: String(window.userWalletAddress),
+          })
+          .then((res) => {
+            console.log(res);
+            connectWallet.innerText = "Sign Out";
+            connectWallet.removeEventListener(
+              "click",
+              connectWalletwithMetaMask
+            );
+            setTimeout(() => {
+              connectWallet.addEventListener("click", signOutOfMetaMask);
+            }, 200);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+
+      function signOutOfMetaMask() {
+        window.userwalletAddress = null;
+        walletAddress.innerText = "";
+        connectWallet.innerText = "Connect Wallet";
+        // make a get axios call to backend to indicate signing out
+        axios
+          .get("http://127.0.0.1:5000/api/wallet")
+          .then((res) => {
+            console.log(res);
+            connectWallet.removeEventListener("click", signOutOfMetaMask);
+            setTimeout(() => {
+              connectWallet.addEventListener(
+                "click",
+                connectWalletwithMetaMask
+              );
+            }, 200);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        checkInstalled();
+      });
+    </script>
   </body>
 </html>
