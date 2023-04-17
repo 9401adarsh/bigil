@@ -133,7 +133,7 @@ def hello_world():
             #         return "equal images, cant upload, bye bye - here is the link of image you wanted"
             #     else:
             #         return "equal images, but different signatures, so cant upload cos you ripped someone off"
-            if comparison_metric <= 32:
+            if comparison_metric <= 25:
                 if len(lines) > 0:
                     cm_dict = read_file(lines)
                     verify_flag = verify_commitment(cm_dict)
@@ -226,6 +226,11 @@ def download_image():
     filename = request.form['img_name']
     directory = './dataStorage'
     return send_file(os.path.join(directory, filename))
+
+
+@app.route('/arbitration', methods=['GET', 'POST'])
+def arbitration():
+    return render_template('arbitration.html')
 
 
 if __name__ == '__main__':

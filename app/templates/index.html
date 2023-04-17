@@ -12,14 +12,14 @@
         color: white;
         padding: 10px;
       }
-  
+
       nav a {
         color: white;
         text-decoration: none;
         margin: 0 10px;
         font-size: 20px;
       }
-  
+
       button {
         margin: 10px;
         padding: 5px 10px;
@@ -29,19 +29,19 @@
         border: none;
         cursor: pointer;
       }
-  
+
       form {
         display: flex;
         flex-direction: column;
         align-items: center;
         margin: 50px;
       }
-  
-      input[type=file] {
+
+      input[type="file"] {
         margin: 20px;
       }
-  
-      input[type=submit] {
+
+      input[type="submit"] {
         padding: 5px 10px;
         border-radius: 5px;
         background-color: #333;
@@ -49,9 +49,9 @@
         border: none;
         cursor: pointer;
       }
-      #submitBtn{
-        padding:0.5em 1em;
-        font-size:1.5em;
+      #submitBtn {
+        padding: 0.5em 1em;
+        font-size: 1.5em;
       }
     </style>
   </head>
@@ -164,6 +164,14 @@
       }
 
       window.addEventListener("DOMContentLoaded", () => {
+        axios
+          .get("http://127.0.0.1:5000/api/wallet")
+          .then((res) => {
+            console.log(res);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
         checkInstalled();
       });
     </script>
