@@ -3,11 +3,69 @@
   <head>
     <title>Hello, Flask!</title>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+      nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #333;
+        color: white;
+        padding: 10px;
+      }
+  
+      nav a {
+        color: white;
+        text-decoration: none;
+        margin: 0 10px;
+        font-size: 20px;
+      }
+  
+      button {
+        margin: 10px;
+        padding: 5px 10px;
+        border-radius: 5px;
+        background-color: #333;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+  
+      form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 50px;
+      }
+  
+      input[type=file] {
+        margin: 20px;
+      }
+  
+      input[type=submit] {
+        padding: 5px 10px;
+        border-radius: 5px;
+        background-color: #333;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      #submitBtn{
+        padding:0.5em 1em;
+        font-size:1.5em;
+      }
+    </style>
   </head>
   <body>
+    <nav>
+      <div>
+        <a href="/">Home</a>
+        <a href="/arbitration">Arbitration</a>
+      </div>
+      <button id="connectWallet" onclick="">Log into Metamask account</button>
+    </nav>
     <h1>Hello, Flask!</h1>
     <h3>Connect Your MetaMask Wallet Here!</h3>
-    <button id="connectWallet" onclick="">Connect Wallet</button>
+    <!-- <button id="connectWallet" onclick="">Connect Wallet</button> -->
     <p id="walletAddress"></p>
     <form method="POST" enctype="multipart/form-data">
       <label for="image_file">Select an image:</label>
@@ -16,7 +74,7 @@
       <label for="text_file">Select a text file:</label>
       <input type="file" name="text_file" id="text_file" />
       <br />
-      <button type="submit">Submit</button>
+      <button type="submit" id="submitBtn">Submit</button>
     </form>
 
     {% if img_name %}
