@@ -380,6 +380,7 @@ def compressImage(imagePath):
 
     return compressedImageMatrix ##returns Image Object
 
+
 def saveCompressedImage(imageObj, filePath = './lena-compress.jpg'):
     imageObj.save(filePath)
 
