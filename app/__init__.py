@@ -81,7 +81,8 @@ def verify_signature(img_name, img_for_exif1):
     except IOError:
         pass
     pb = ''
-    key_name = "p1.jpeg".split('.')[0] + '-key.pem'  # hardcoded, to change
+    user_id = img_for_exif1.copyright.split('$')[0].strip()
+    key_name = user_id + '-key.pem'  # hardcoded, to change
     with open('./public_keys/' + key_name, "rb") as key_file:
         pb = serialization.load_pem_public_key(key_file.read())
 
