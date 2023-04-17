@@ -1,19 +1,46 @@
+import csv
 import io
 import os
-import csv
+
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from exif import Image as ei
-from flask import Flask, render_template, request, make_response
+from flask import Flask, make_response, render_template, request
 from PIL import Image
-from ETHBC import upload_commitment
+
+from ETHBC import unique_img_transact, upload_commitment
 from PC import Commitment, Message, PCParameters, PCVerifier
+from spihtWorkflow.spihtHashCompare import compareAgainstImagesInCloud
 
 app = Flask(__name__)
 
 
-def hash_comparison():
-    return 0.4
+def hash_comparison(img):
+    tuple_res = compareAgainstImagesInCloud(img)
+    candidate_img = tuple_res[0]
+    comparison_metric = tuple_res[1]
+    sign1 = img.getexif()[33432]
+    sign2 = candidate_img.getexif()[33432]
+    equal_sig_flag = False
+    if sign1 == sign2:
+        equal_sig_flag = True
+    return candidate_img, comparison_metric, equal_sig_flag
+
+
+def store_owner_info(owner_addr, img_id):
+    csv_file_path = "owner_info.csv"
+    # Check if file exists
+    file_exists = os.path.isfile(csv_file_path)
+    # If file does not exist, create a new CSV file with headers
+    if not file_exists:
+        with open(csv_file_path, mode='w', newline='') as csv_file:
+            writer = csv.writer(csv_file)
+            # add your own headers here
+            writer.writerow(['filename', 'owner_addr'])
+    # Append a new line to the existing CSV file
+    with open(csv_file_path, mode='a', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow([img_id, owner_addr])
 
 
 def read_file(lines):
@@ -78,72 +105,81 @@ def verify_signature(img_name, img_for_exif1):
 
 @app.route('/', methods=['GET', 'POST'])
 def hello_world():
+    flag = 0
     if request.method == 'POST':
         image_file = request.files['image_file']
         text_file = request.files['text_file']
         lines = text_file.read().decode('utf-8').splitlines() if text_file else []
         img_name = image_file.filename
         image_bytes = image_file.read()
+
         img = Image.open(io.BytesIO(image_bytes))
         if img.getexif() == {}:
-            return "Image has no EXIF data"
+            return "Image has no EXIF data, Invalid Image"
+
         img_for_exif = ei(io.BytesIO(image_bytes))
         x = verify_signature(img_name, img_for_exif)
+
         if x:
-            if hash_comparison() < 0.5:
+            candidate_img, comparison_metric, equal_sig_flag = hash_comparison(
+                img)
+            # if comparison_metric == 0:
+            #     if(equal_sig_flag):
+            #         return "equal images, cant upload, bye bye - here is the link of image you wanted"
+            #     else:
+            #         return "equal images, but different signatures, so cant upload cos you ripped someone off"
+            if comparison_metric <= 0.5:
                 if len(lines) > 0:
                     cm_dict = read_file(lines)
-                    if verify_commitment(cm_dict) is True:
-                        senderAddr = request.cookies.get('userWallet')
-                        owner_addr = ''
-                        with open('owner_info.csv', mode='r') as csv_file:
-                            csv_reader = csv.reader(csv_file)
-                            line_number = 0
-                            for row in csv_reader:
-                                line_number += 1
-                                # compare the first value in each row with the search value
-                                if row[0] == 'i4.jpg':
-                                    # if a match is found, assign the second value to the variable
-                                    owner_addr = row[1]
-                                    break  # stop searching after the first match
-                            else:
-                                print("No match found.")
-                        log = ''
-                        for line in lines:
-                            log = line + '$' + log
-                        upload_commitment(
-                            senderAddr, log, owner_addr, img_name)
-                        return "modded image, storing edits to blockchain"
+                    verify_flag = verify_commitment(cm_dict)
+                    if verify_flag is True:
+                        if equal_sig_flag:
+                            ans = os.path.split(candidate_img.filename)
+                            senderAddr = request.cookies.get('userWallet')
+                            owner_addr = ''
+                            with open('owner_info.csv', mode='r') as csv_file:
+                                csv_reader = csv.reader(csv_file)
+                                for row in csv_reader:
+                                    if row[0] == ans[1]:
+                                        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! add transform log link as well
+                                        owner_addr = row[1]
+                                        break  # stop searching after the first match
+                                else:
+                                    print("No match found.")
+                            log = ''
+                            for line in lines:
+                                log = line + '$' + log
+                            log = '###' + log + '###'
+                            print(ans)
+                            tf_path = './transform_logs/' + \
+                                senderAddr + '_' + ans[1] + '_log.txt'
+                            with open(tf_path, 'w') as f:
+                                f.write(log)
+                            print(senderAddr, log, owner_addr, ans[1])
+                            upload_commitment(
+                                senderAddr, log, owner_addr, ans[1])
+                            return "modded image, storing edits to blockchain"
+                        else:
+                            return "Invalid Image"
                     else:
                         return "invalid image"
                 else:
-                    return "similar images"
+                    if equal_sig_flag:
+                        return "Same image uploaded before, cant be uploaded again, here is link of orig img"
+                    else:
+                        return "Invalid Image, you can try appealing"
             else:
-                csv_file_path = "owner_info.csv"
-
-                # Check if file exists
-                file_exists = os.path.isfile(csv_file_path)
-
-                # If file does not exist, create a new CSV file with headers
-                if not file_exists:
-                    with open(csv_file_path, mode='w', newline='') as csv_file:
-                        writer = csv.writer(csv_file)
-                        # add your own headers here
-                        writer.writerow(['filename', 'owner_addr'])
-
                 owner_addr = request.cookies.get('userWallet')
-                # Append a new line to the existing CSV file
-                with open(csv_file_path, mode='a', newline='') as csv_file:
-                    writer = csv.writer(csv_file)
-                    writer.writerow([img_name, owner_addr])
-
+                store_owner_info(owner_addr, img_name)
                 # store the image in dataStorage folder
                 img.save('./dataStorage/' + img_name, exif=img.info['exif'])
+                # call the smart contract function
+                unique_img_transact(owner_addr, img_name)
                 return "unique image"
         else:
             return "Signature is invalid"
 
-        return 'EXIF data printed to console!'
+        # return 'EXIF data printed to console!'
     else:
         return render_template('index.html')
 
