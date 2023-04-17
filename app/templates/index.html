@@ -18,6 +18,20 @@
       <br />
       <button type="submit">Submit</button>
     </form>
+
+    {% if img_name %}
+    <div>
+      <h3>
+        The image below is the closest match to your image: download it here!
+      </h3>
+      <form action="./download" method="post">
+        <input type="hidden" value="{{ img_name }}" name="img_name" />
+        <input type="submit" value="Download" />
+      </form>
+      <img id="picture" src="data:image/jpeg;base64,{{ img_data }}" />
+    </div>
+    {% endif %}
+
     <script type="text/javascript">
       window.userWalletAddress = null;
       const connectWallet = document.getElementById("connectWallet");

@@ -1,16 +1,19 @@
+from spihtWorkflow.spihtHashCompare import compareAgainstImagesInCloud
+from PC import Commitment, Message, PCParameters, PCVerifier
+from ETHBC import unique_img_transact, upload_commitment
+from PIL import Image
+from flask import Flask, make_response, render_template, request, send_file, send_from_directory
+from exif import Image as ei
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes, serialization
 import csv
 import io
+import base64
 import os
+import csv
 
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding
-from exif import Image as ei
-from flask import Flask, make_response, render_template, request
-from PIL import Image
+spaceLog = 'metrics/spaceLog.csv'
 
-from ETHBC import unique_img_transact, upload_commitment
-from PC import Commitment, Message, PCParameters, PCVerifier
-from spihtWorkflow.spihtHashCompare import compareAgainstImagesInCloud
 
 app = Flask(__name__)
 
@@ -78,7 +81,7 @@ def verify_signature(img_name, img_for_exif1):
     except IOError:
         pass
     pb = ''
-    key_name = img_name.split('.')[0] + '-key.pem'
+    key_name = "p1.jpeg".split('.')[0] + '-key.pem'  # hardcoded, to change
     with open('./public_keys/' + key_name, "rb") as key_file:
         pb = serialization.load_pem_public_key(key_file.read())
 
@@ -123,39 +126,57 @@ def hello_world():
         if x:
             candidate_img, comparison_metric, equal_sig_flag = hash_comparison(
                 img)
+            ans = os.path.split(candidate_img.filename)
             # if comparison_metric == 0:
             #     if(equal_sig_flag):
             #         return "equal images, cant upload, bye bye - here is the link of image you wanted"
             #     else:
             #         return "equal images, but different signatures, so cant upload cos you ripped someone off"
-            if comparison_metric <= 0.5:
+            if comparison_metric <= 32:
                 if len(lines) > 0:
                     cm_dict = read_file(lines)
                     verify_flag = verify_commitment(cm_dict)
                     if verify_flag is True:
                         if equal_sig_flag:
-                            ans = os.path.split(candidate_img.filename)
                             senderAddr = request.cookies.get('userWallet')
                             owner_addr = ''
                             with open('owner_info.csv', mode='r') as csv_file:
                                 csv_reader = csv.reader(csv_file)
                                 for row in csv_reader:
                                     if row[0] == ans[1]:
-                                        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! add transform log link as well
                                         owner_addr = row[1]
-                                        break  # stop searching after the first match
+                                        break
                                 else:
                                     print("No match found.")
                             log = ''
                             for line in lines:
                                 log = line + '$' + log
                             log = '###' + log + '###'
-                            print(ans)
+                            # print(ans)
                             tf_path = './transform_logs/' + \
                                 senderAddr + '_' + ans[1] + '_log.txt'
                             with open(tf_path, 'w') as f:
                                 f.write(log)
-                            print(senderAddr, log, owner_addr, ans[1])
+                            #print(senderAddr, log, owner_addr, ans[1])
+                            #print(img.format, candidate_img.format)
+                            o_img = img
+                            name1 = "tempstore/t1." + str(img.format).lower()
+                            o_img = o_img.save(name1)
+                            c_img = candidate_img
+                            name2 = "tempstore/t2." + \
+                                str(candidate_img.format).lower()
+                            c_img = c_img.save(name2)
+
+                            row_data = [1, (os.stat(name1).st_size+os.stat(
+                                name2).st_size), (os.stat(
+                                    name2).st_size + os.stat(tf_path).st_size)]
+                            with open(spaceLog, 'a', newline='') as f_new:
+                                writer = csv.writer(f_new)
+                                writer.writerow(row_data)
+                                f_new.close()
+                            # delete temp images
+                            os.remove(name1)
+                            os.remove(name2)
                             upload_commitment(
                                 senderAddr, log, owner_addr, ans[1])
                             return "modded image, storing edits to blockchain"
@@ -165,7 +186,11 @@ def hello_world():
                         return "invalid image"
                 else:
                     if equal_sig_flag:
-                        return "Same image uploaded before, cant be uploaded again, here is link of orig img"
+                        data = io.BytesIO()
+                        candidate_img.save(data, candidate_img.format)
+                        encoded_img_data = base64.b64encode(data.getvalue())
+                        return render_template('index.html', img_data=encoded_img_data.decode('utf-8'), img_name=ans[1])
+                        # return "Same image uploaded before, cant be uploaded again, here is link of orig img"
                     else:
                         return "Invalid Image, you can try appealing"
             else:
@@ -178,8 +203,6 @@ def hello_world():
                 return "unique image"
         else:
             return "Signature is invalid"
-
-        # return 'EXIF data printed to console!'
     else:
         return render_template('index.html')
 
@@ -188,14 +211,20 @@ def hello_world():
 def wallet():
     if request.method == 'POST':
         wallet_address = request.get_json()['walletAddress']
-        # print(request.get_json()['walletAddress'])
-        response = make_response()  # We can also render new page with render_template
+        response = make_response()
         response.set_cookie('userWallet', wallet_address)
         return response
     else:
         response = make_response()
         response.delete_cookie('userWallet')
         return response
+
+
+@app.route('/download', methods=['POST'])
+def download_image():
+    filename = request.form['img_name']
+    directory = './dataStorage'
+    return send_file(os.path.join(directory, filename))
 
 
 if __name__ == '__main__':
