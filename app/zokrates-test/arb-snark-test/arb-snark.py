@@ -1,5 +1,6 @@
 import os
 import subprocess
+from typing import *
 
 
 class arbitrationZok:
@@ -14,10 +15,13 @@ class arbitrationZok:
         subprocess.run(["zokrates", "setup"], cwd=self.cwd)
         return
 
-    def genWitness(self, input):
+    def genWitness(self, preImage, hashDigest: str):
         # give input as a list and and each argument as a string
-        print(input)
-        commandToRun = ["zokrates", "compute-witness", "-a"] + input
+        preImageInput = ['0', '0', '0', str(int(preImage, base=16))]
+        hashDigestInput = [hashDigest[:32], hashDigest[32:]]
+        unpackedHashDigest = [str(int(i, 16)) for i in hashDigestInput]
+        inputList = preImageInput + unpackedHashDigest
+        commandToRun = ["zokrates", "compute-witness", "-a"] + inputList
         print(commandToRun)
         result = subprocess.run(commandToRun, capture_output=True)
         return result.stdout.decode('utf-8')
@@ -38,8 +42,8 @@ class arbitrationZok:
     def flushFiles(self, genWitness: bool):
         pass
 
-    def simulator(self, witnessInput):
-        output = self.genWitness(witnessInput)
+    def simulator(self, preImage, hashDigest):
+        output = self.genWitness(preImage, hashDigest)
         if output != 'Computing witness...\nWitness file written to \'witness\'\n':
             print('witnessGen failed')
             subprocess.run(["bash", "flush.sh"])
@@ -55,7 +59,7 @@ cwd = os.getcwd()
 zokFilename = 'arb-snark.zok'
 
 zokBridge = arbitrationZok(zokFilename, cwd)
-if zokBridge.simulator(witnessInput=['0', '0', '0', '5', '263561599766550617289250058199814760685', '65303172752238645975888084098459749904']):
+if zokBridge.simulator('70f073d3fb50f810', 'c43d10e40eaacd46a43943896e5beafeadd5f1bdbc93f905fb658ab5f8d61409'):
     print('Verification is a success')
 else:
     print('Verification is a bust.')
