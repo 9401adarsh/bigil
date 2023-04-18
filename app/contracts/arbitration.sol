@@ -8,7 +8,7 @@ contract Arbitration {
 
     constructor() {
         // copy the first account address from the ganache-cli output and paste below
-        server = payable(0x19c5B3D75ae41aD12253946564A430E0C826fFe3);
+        server = payable(0x098224edd0c93A3Cdd6988a80d4681Ef0E3976ed);
     }
 
     function stake() external payable {

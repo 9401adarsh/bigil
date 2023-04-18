@@ -2,6 +2,8 @@ import base64
 import csv
 import io
 import os
+import hashlib
+import json
 
 from exif import Image as ei
 from flask import (Flask, make_response, render_template, request, send_file)
@@ -10,9 +12,11 @@ from PIL import Image
 from ETHBC import unique_img_transact, upload_commitment
 from ETHBC2 import *
 from dedupUtils import *
+from spihtWorkflow.spihtHashCompare import *
 
 from arbitration import *
 
+from zokratesTest.arbSnarkTest.arbSnark import arbitrationZok
 
 comparison_threshold = 25
 
@@ -29,13 +33,13 @@ def hello_world():
         img = Image.open(io.BytesIO(image_bytes))
         if img.getexif() == {}:
             return "Image has no EXIF data, Invalid Image"
-        img_for_exif = ei(img)
+        img_for_exif = ei(io.BytesIO(image_bytes))
         sig_validity = verify_signature(img_name, img_for_exif)
         print(img_for_exif.list_all())
         if sig_validity:
             candidate_img, comparison_metric, equal_sig_flag = hash_comparison(
                 img)
-            candidate_img_fname = os.path.split(candidate_img.filename)[1]
+            candidate_img_fname = os.path.split(candidate_img.filename)[1] if candidate_img else None
             # if comparison_metric == 0:
             #     if(equal_sig_flag):
             #         return "equal images, cant upload, bye bye - here is the link of image you wanted"
@@ -44,12 +48,12 @@ def hello_world():
             if comparison_metric <= comparison_threshold:
                 if len(lines) > 0:
                     cm_dict = read_file(lines)
-                    verify_flag = verify_commitment(cm_dict)
+                    transform_log, verify_flag = verify_commitment(cm_dict)
                     if verify_flag is True:
                         if equal_sig_flag:
                             senderAddr = request.cookies.get('userWallet')
                             log, owner_addr, tf_path = store_info(
-                                senderAddr, candidate_img_fname, lines)
+                                senderAddr, candidate_img_fname, lines, transform_log)
                             #print(senderAddr, log, owner_addr, candidate_img_fname)
                             #print(img.format, candidate_img.format)
                             store_temp(img, candidate_img, tf_path)
@@ -71,6 +75,7 @@ def hello_world():
                         return "Invalid Image, you can try appealing"
             else:
                 owner_addr = request.cookies.get('userWallet')
+                print(owner_addr, img_name)
                 store_owner_info(owner_addr, img_name)
                 # store the image in dataStorage folder
                 img.save('./dataStorage/' + img_name, exif=img.info['exif'])
@@ -134,7 +139,14 @@ def arbitration():
         flag = compare_images(img, candidate_img)
         if flag:
             arbitration_fail(userAddr)
-            return "Images are too similar, arbitration failed"
+            zokratesDirectory = os.getcwd() + '/zokratesTest/arbSnarkTest'
+            zokObject = arbitrationZok('arb-snark.zok', zokratesDirectory)
+            wHash = computeWHash(candidate_img)
+            wHashStr = '0'*112 + wHash.__str__()
+            preimage = bytes.fromhex(wHashStr)
+            hashDigest = hashlib.sha256(preimage).hexdigest()
+            verificationResult = zokObject.simulator(wHash.__str__(), hashDigest)
+            return "Images are too similar, arbitration failed\n\n" +  json.dumps(verificationResult[1])
         else:
             arbitration_success(userAddr)
             return "Images are not similar, arbitration successful, apologies for the inconvenience"

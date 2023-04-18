@@ -2,15 +2,20 @@ import json
 from web3 import Web3
 
 # Fill in your infura API key here
-ganache_url = "http://127.0.0.1:7545"
+ganache_url = "http://127.0.0.1:8545"
 web3 = Web3(Web3.HTTPProvider(ganache_url))
 web3.eth.default_account = web3.eth.accounts[0]
-# copy the 1st contract address after deploying on ganache-cli and paste below
-contract_address = web3.to_checksum_address(
-    '0x4979fcf8e36725614702df09d3738291cb2ef053')
+# copy the contract address after deploying contract on ganache-cli-blockchain and paste below
+contract_id = "0x80b0d40446fBBf71A1B72957dDf1e73D56F14505"
+contract_address = web3.to_checksum_address(contract_id)
 # OMG Address
 abi = json.loads('''
 [
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
 	{
 		"anonymous": false,
 		"inputs": [
@@ -68,6 +73,19 @@ abi = json.loads('''
 		"type": "event"
 	},
 	{
+		"inputs": [],
+		"name": "greet",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "string",
@@ -101,24 +119,6 @@ abi = json.loads('''
 		"name": "logTransformation",
 		"outputs": [],
 		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"inputs": [],
-		"name": "greet",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
 		"type": "function"
 	},
 	{

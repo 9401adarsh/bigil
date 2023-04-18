@@ -1,11 +1,10 @@
 import csv
 import os
-from mailbox import Message
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 
-from PC import Commitment, PCParameters, PCVerifier
+from PC import Commitment, PCParameters, PCVerifier, Message
 from spihtWorkflow.spihtHashCompare import compareAgainstImagesInCloud
 from imageRetriever import *
 spaceLog = 'metrics/spaceLog.csv'
@@ -13,6 +12,8 @@ spaceLog = 'metrics/spaceLog.csv'
 
 def hash_comparison(img):
     tuple_res = compareAgainstImagesInCloud(img)
+    if tuple_res == -2e20:
+        return None, 2e20, False
     candidate_img = tuple_res[0]
     comparison_metric = tuple_res[1]
     sign1 = img.getexif()[33432]
@@ -55,7 +56,9 @@ def read_file(lines):
 
 
 def verify_commitment(dictionary):
+    print(dictionary)
     c = Commitment(int(dictionary['c']))
+    print(dictionary['M'], int(dictionary['r']))
     m = Message(dictionary['M'], int(dictionary['r']))
     params = PCParameters(int(dictionary['q']), int(
         dictionary['g']), int(dictionary['h']))
@@ -63,9 +66,9 @@ def verify_commitment(dictionary):
     v.add(c)
     v.add(m)
     if v.verify():
-        return True
+        return dictionary['M'], True
     else:
-        return False
+        return None, False
 
 
 def verify_signature(img_name, img_for_exif1):
@@ -75,9 +78,10 @@ def verify_signature(img_name, img_for_exif1):
         pass
     pb = ''
     user_id = img_for_exif1.copyright.split('$')[0].strip()
+    print(user_id)
     key_name = user_id + '-key.pem'  # hardcoded, to change
     with open('./public_keys/' + key_name, "rb") as key_file:
-        pb = serialization.load_pem_public_key(key_file.read())
+        pb = serialization.load_pem_public_key(key_file.read(), backend=None)
 
     if img_for_exif1.list_all().count('copyright') > 0:
         cp_list = img_for_exif1.copyright.split('$')
@@ -143,7 +147,7 @@ def search_images(userAddr):
     for key in dictI:
         im = Image.open('./dataStorage/' + key)
         list_of_imgs.append(imageRetriever(
-            im, './transform_logs/'+dictI[key] + '.txt'))
+            im, './transform_logs/'+dictI[key]))
     return list_of_imgs
 
 

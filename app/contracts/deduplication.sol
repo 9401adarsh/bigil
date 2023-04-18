@@ -20,7 +20,7 @@ contract ImageTransformations {
     constructor() {
         message = "Hello, World!";
         // copy the first account address from the ganache-cli output and paste below
-        serverAddress = payable(0x919F59D51A771D59393Ba9E3278d60E93f8cd261);
+        serverAddress = payable(0x098224edd0c93A3Cdd6988a80d4681Ef0E3976ed);
     }
     
     function greet() public view returns (string memory){

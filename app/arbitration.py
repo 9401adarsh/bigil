@@ -1,7 +1,5 @@
 from skimage.metrics import structural_similarity as ssim
-import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 import numpy
 from PIL import Image
 
@@ -25,7 +23,7 @@ def compare_images(i1, i2):
     else:
         i2 = cv2.resize(i2, (w2, w1), interpolation=cv2.INTER_AREA)
 
-    hist_img1 = cv2.calcHist([i1], [0, 1, 2], None, [
+    """ hist_img1 = cv2.calcHist([i1], [0, 1, 2], None, [
                              256, 256, 256], [0, 256, 0, 256, 0, 256])
     cv2.normalize(hist_img1, hist_img1, alpha=0,
                   beta=1, norm_type=cv2.NORM_MINMAX)
@@ -35,17 +33,17 @@ def compare_images(i1, i2):
                   beta=1, norm_type=cv2.NORM_MINMAX)
 
     # Color Histogram similarity
-    clr_metric = cv2.compareHist(hist_img1, hist_img2, cv2.HISTCMP_CORREL)
+    clr_metric = cv2.compareHist(hist_img1, hist_img2, cv2.HISTCMP_CORREL) """
 
     i1 = cv2.cvtColor(i1, cv2.COLOR_BGR2GRAY)
     i2 = cv2.cvtColor(i2, cv2.COLOR_BGR2GRAY)
     # SSIM similarity
     ssim_metric = ssim(i1, i2)
 
-    print("Color Similarity: ", clr_metric)
+    #print("Color Similarity: ", clr_metric)
     print("SSIM Similarity: ", ssim_metric)
 
-    if (ssim_metric >= 0.95 and clr_metric >= 0.95):
+    if (ssim_metric >= 0.95):
         return True
     else:
         return False

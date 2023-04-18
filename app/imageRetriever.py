@@ -12,8 +12,9 @@ def imageRetriever(img, text_path=None):
         id = ""
         with open(text_path, "r") as fi:
             for ln in fi:
-                if ln.startswith("M |"):
-                    id = (ln[4:].strip())
+                k = ln.split('$')[4]
+                print(k)
+                id = (k[4:].strip())
 
         print(id)
         tf_list = id.split(";")
