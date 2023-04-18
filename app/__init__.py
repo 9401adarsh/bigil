@@ -7,10 +7,10 @@ from exif import Image as ei
 from flask import (Flask, make_response, render_template, request, send_file)
 from PIL import Image
 
-from ETHBC import unique_img_transact, upload_commitment
+# from ETHBC import unique_img_transact, upload_commitment
 from dedupUtils import *
 
-spaceLog = 'metrics/spaceLog.csv'
+
 comparison_threshold = 25
 
 app = Flask(__name__)
@@ -18,24 +18,21 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def hello_world():
-    flag = 0
     if request.method == 'POST':
         image_file, text_file = request.files['image_file'], request.files['text_file']
         lines = text_file.read().decode('utf-8').splitlines() if text_file else []
         img_name = image_file.filename
         image_bytes = image_file.read()
-
         img = Image.open(io.BytesIO(image_bytes))
         if img.getexif() == {}:
             return "Image has no EXIF data, Invalid Image"
-
-        img_for_exif = ei(io.BytesIO(image_bytes))
-        x = verify_signature(img_name, img_for_exif)
-
-        if x:
+        img_for_exif = ei(img)
+        sig_validity = verify_signature(img_name, img_for_exif)
+        print(img_for_exif.list_all())
+        if sig_validity:
             candidate_img, comparison_metric, equal_sig_flag = hash_comparison(
                 img)
-            ans = os.path.split(candidate_img.filename)
+            candidate_img_fname = os.path.split(candidate_img.filename)[1]
             # if comparison_metric == 0:
             #     if(equal_sig_flag):
             #         return "equal images, cant upload, bye bye - here is the link of image you wanted"
@@ -48,46 +45,11 @@ def hello_world():
                     if verify_flag is True:
                         if equal_sig_flag:
                             senderAddr = request.cookies.get('userWallet')
-                            owner_addr = ''
-                            with open('owner_info.csv', mode='r') as csv_file:
-                                csv_reader = csv.reader(csv_file)
-                                for row in csv_reader:
-                                    if row[0] == ans[1]:
-                                        owner_addr = row[1]
-                                        break
-                                else:
-                                    print("No match found.")
-                            log = ''
-                            for line in lines:
-                                log = line + '$' + log
-                            log = '###' + log + '###'
-                            # print(ans)
-                            tf_path = './transform_logs/' + \
-                                senderAddr + '_' + ans[1] + '_log.txt'
-                            with open(tf_path, 'w') as f:
-                                f.write(log)
-                            #print(senderAddr, log, owner_addr, ans[1])
+                            log, owner_addr, tf_path = store_info(senderAddr, candidate_img_fname, lines)
+                            #print(senderAddr, log, owner_addr, candidate_img_fname)
                             #print(img.format, candidate_img.format)
-                            o_img = img
-                            name1 = "tempstore/t1." + str(img.format).lower()
-                            o_img = o_img.save(name1)
-                            c_img = candidate_img
-                            name2 = "tempstore/t2." + \
-                                str(candidate_img.format).lower()
-                            c_img = c_img.save(name2)
-
-                            row_data = [1, (os.stat(name1).st_size+os.stat(
-                                name2).st_size), (os.stat(
-                                    name2).st_size + os.stat(tf_path).st_size)]
-                            with open(spaceLog, 'a', newline='') as f_new:
-                                writer = csv.writer(f_new)
-                                writer.writerow(row_data)
-                                f_new.close()
-                            # delete temp images
-                            os.remove(name1)
-                            os.remove(name2)
-                            upload_commitment(
-                                senderAddr, log, owner_addr, ans[1])
+                            store_temp(img, candidate_img, tf_path)
+                            # upload_commitment(senderAddr, log, owner_addr, candidate_img_fname)
                             return "modded image, storing edits to blockchain"
                         else:
                             return "Invalid Image"
@@ -98,7 +60,7 @@ def hello_world():
                         data = io.BytesIO()
                         candidate_img.save(data, candidate_img.format)
                         encoded_img_data = base64.b64encode(data.getvalue())
-                        return render_template('index.html', img_data=encoded_img_data.decode('utf-8'), img_name=ans[1])
+                        return render_template('index.html', img_data=encoded_img_data.decode('utf-8'), img_name=candidate_img_fname)
                         # return "Same image uploaded before, cant be uploaded again, here is link of orig img"
                     else:
                         return "Invalid Image, you can try appealing"
@@ -108,7 +70,7 @@ def hello_world():
                 # store the image in dataStorage folder
                 img.save('./dataStorage/' + img_name, exif=img.info['exif'])
                 # call the smart contract function
-                unique_img_transact(owner_addr, img_name)
+                # unique_img_transact(owner_addr, img_name)
                 return "unique image"
         else:
             return "Signature is invalid"

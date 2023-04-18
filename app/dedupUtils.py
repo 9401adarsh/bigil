@@ -8,6 +8,8 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from PC import Commitment, PCParameters, PCVerifier
 from spihtWorkflow.spihtHashCompare import compareAgainstImagesInCloud
 
+spaceLog = 'metrics/spaceLog.csv'
+
 
 def hash_comparison(img):
     tuple_res = compareAgainstImagesInCloud(img)
@@ -96,3 +98,44 @@ def verify_signature(img_name, img_for_exif1):
             return False
     else:
         return False
+
+def store_info(senderAddr, candidate_img_fname, lines):
+    owner_addr = ''
+    with open('owner_info.csv', mode='r') as csv_file:
+        csv_reader = csv.reader(csv_file)
+        for row in csv_reader:
+            if row[0] == candidate_img_fname:
+                owner_addr = row[1]
+                break
+        else:
+            print("No match found.")
+    log = ''
+    for line in lines:
+        log = line + '$' + log
+    log = '###' + log + '###'
+    # print(ans)
+    tf_path = './transform_logs/' + \
+        senderAddr + '_' + candidate_img_fname + '_log.txt'
+    with open(tf_path, 'w') as f:
+        f.write(log)
+    return log, owner_addr, tf_path
+                            
+def store_temp(img, candidate_img, tf_path):
+    o_img = img
+    name1 = "tempstore/t1." + str(img.format).lower()
+    o_img = o_img.save(name1)
+    c_img = candidate_img
+    name2 = "tempstore/t2." + \
+        str(candidate_img.format).lower()
+    c_img = c_img.save(name2)
+
+    row_data = [1, (os.stat(name1).st_size+os.stat(
+        name2).st_size), (os.stat(
+            name2).st_size + os.stat(tf_path).st_size)]
+    with open(spaceLog, 'a', newline='') as f_new:
+        writer = csv.writer(f_new)
+        writer.writerow(row_data)
+        f_new.close()
+    # delete temp images
+    os.remove(name1)
+    os.remove(name2)
