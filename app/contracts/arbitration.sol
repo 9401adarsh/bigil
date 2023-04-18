@@ -6,9 +6,9 @@ contract Arbitration {
     uint public percentage;
     mapping(address => uint) public stakes;
 
-    constructor(address payable _server, uint _percentage) {
-        server = _server;
-        percentage = _percentage;
+    constructor() {
+        // copy the first account address from the ganache-cli output and paste below
+        server = payable(0x19c5B3D75ae41aD12253946564A430E0C826fFe3);
     }
 
     function stake() external payable {

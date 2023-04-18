@@ -5,9 +5,9 @@ from web3 import Web3
 ganache_url = "http://127.0.0.1:7545"
 web3 = Web3(Web3.HTTPProvider(ganache_url))
 web3.eth.default_account = web3.eth.accounts[0]
-
+# copy the 1st contract address after deploying on ganache-cli and paste below
 contract_address = web3.to_checksum_address(
-    '0x2CDE1e52B6feb28A2Fff44d458b7f2bf64148ad9')
+    '0x4979fcf8e36725614702df09d3738291cb2ef053')
 # OMG Address
 abi = json.loads('''
 [
