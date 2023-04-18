@@ -7,7 +7,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 
 from PC import Commitment, PCParameters, PCVerifier
 from spihtWorkflow.spihtHashCompare import compareAgainstImagesInCloud
-
+from imageRetriever import *
 spaceLog = 'metrics/spaceLog.csv'
 
 
@@ -24,7 +24,7 @@ def hash_comparison(img):
 
 
 def store_owner_info(owner_addr, img_id):
-    csv_file_path = "owner_info.csv"
+    csv_file_path = "user_info.csv"
     # Check if file exists
     file_exists = os.path.isfile(csv_file_path)
     # If file does not exist, create a new CSV file with headers
@@ -99,9 +99,10 @@ def verify_signature(img_name, img_for_exif1):
     else:
         return False
 
-def store_info(senderAddr, candidate_img_fname, lines):
+
+def store_info(senderAddr, candidate_img_fname, lines, transform_log):
     owner_addr = ''
-    with open('owner_info.csv', mode='r') as csv_file:
+    with open('user_info.csv', mode='r') as csv_file:
         csv_reader = csv.reader(csv_file)
         for row in csv_reader:
             if row[0] == candidate_img_fname:
@@ -114,12 +115,38 @@ def store_info(senderAddr, candidate_img_fname, lines):
         log = line + '$' + log
     log = '###' + log + '###'
     # print(ans)
-    tf_path = './transform_logs/' + \
-        senderAddr + '_' + candidate_img_fname + '_log.txt'
+    tf_filename = senderAddr + '_' + candidate_img_fname + '_log.txt'
+    tf_path = './transform_logs/' + tf_filename
     with open(tf_path, 'w') as f:
         f.write(log)
+    with open('user_info.csv', mode='a', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow([candidate_img_fname, senderAddr, tf_filename])
     return log, owner_addr, tf_path
-                            
+
+
+def search_images(userAddr):
+    listI = []
+    dictI = {}
+    with open('user_info.csv', mode='r') as csv_file:
+        csv_reader = csv.reader(csv_file)
+        for row in csv_reader:
+            if row[1] == userAddr:
+                if len(row) == 3:
+                    dictI[row[0]] = row[2]
+                else:
+                    listI.append(row[0])
+    list_of_imgs = []
+    for i in listI:
+        im = Image.open('./dataStorage/' + i)
+        list_of_imgs.append(im)
+    for key in dictI:
+        im = Image.open('./dataStorage/' + key)
+        list_of_imgs.append(imageRetriever(
+            im, './transform_logs/'+dictI[key] + '.txt'))
+    return list_of_imgs
+
+
 def store_temp(img, candidate_img, tf_path):
     o_img = img
     name1 = "tempstore/t1." + str(img.format).lower()

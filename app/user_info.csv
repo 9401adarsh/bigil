@@ -1,6 +1,5 @@
-filename,owner_addr
+filename,addr,transformation
 i4.jpg,0xb47cc227135e191bbba4ebcf29e8dd0d633e3dd5
 p1.jpg,0xb47cc227135e191bbba4ebcf29e8dd0d633e3dd5
 6.jpg,0xb47cc227135e191bbba4ebcf29e8dd0d633e3dd5
-6.jpg,0xb47cc227135e191bbba4ebcf29e8dd0d633e3dd5
-3.jpg,
+3.jpg,0xb47cc227135e191bbba4ebcf29e8dd0d633e3dd5,0xb47cc227135e191bbba4ebcf29e8dd0d633e3dd5_3.jpg_log

@@ -7,8 +7,11 @@ from exif import Image as ei
 from flask import (Flask, make_response, render_template, request, send_file)
 from PIL import Image
 
-# from ETHBC import unique_img_transact, upload_commitment
+from ETHBC import unique_img_transact, upload_commitment
+from ETHBC2 import *
 from dedupUtils import *
+
+from arbitration import *
 
 
 comparison_threshold = 25
@@ -45,11 +48,13 @@ def hello_world():
                     if verify_flag is True:
                         if equal_sig_flag:
                             senderAddr = request.cookies.get('userWallet')
-                            log, owner_addr, tf_path = store_info(senderAddr, candidate_img_fname, lines)
+                            log, owner_addr, tf_path = store_info(
+                                senderAddr, candidate_img_fname, lines)
                             #print(senderAddr, log, owner_addr, candidate_img_fname)
                             #print(img.format, candidate_img.format)
                             store_temp(img, candidate_img, tf_path)
-                            # upload_commitment(senderAddr, log, owner_addr, candidate_img_fname)
+                            upload_commitment(
+                                senderAddr, log, owner_addr, candidate_img_fname)
                             return "modded image, storing edits to blockchain"
                         else:
                             return "Invalid Image"
@@ -70,7 +75,7 @@ def hello_world():
                 # store the image in dataStorage folder
                 img.save('./dataStorage/' + img_name, exif=img.info['exif'])
                 # call the smart contract function
-                # unique_img_transact(owner_addr, img_name)
+                unique_img_transact(owner_addr, img_name)
                 return "unique image"
         else:
             return "Signature is invalid"
@@ -91,6 +96,25 @@ def wallet():
         return response
 
 
+@app.route('/retrieval', methods=['GET', 'POST'])
+def retrieval():
+    if request.method == 'POST':
+        pass
+    else:
+        userAddr = request.cookies.get('userWallet')
+        if userAddr:
+            list_of_i = search_images(userAddr)
+            imagelist = []
+            for i in list_of_i:
+                data = io.BytesIO()
+                i.save(data, 'JPEG')
+                encoded_img_data = base64.b64encode(data.getvalue())
+                imagelist.append(str(encoded_img_data))
+            return render_template('retrieval.html', imagelist=imagelist)
+        else:
+            return 'Please login first'
+
+
 @app.route('/download', methods=['POST'])
 def download_image():
     filename = request.form['img_name']
@@ -100,7 +124,22 @@ def download_image():
 
 @app.route('/arbitration', methods=['GET', 'POST'])
 def arbitration():
-    return render_template('arbitration.html')
+    if request.method == 'POST':
+        image_file = request.files['image_file']
+        image_bytes = image_file.read()
+        img = Image.open(io.BytesIO(image_bytes))
+        userAddr = request.cookies.get('userWallet')
+        call_stake(userAddr, 0.1)
+        candidate_img, comparison_metric, equal_sig_flag = hash_comparison(img)
+        flag = compare_images(img, candidate_img)
+        if flag:
+            arbitration_fail(userAddr)
+            return "Images are too similar, arbitration failed"
+        else:
+            arbitration_success(userAddr)
+            return "Images are not similar, arbitration successful, apologies for the inconvenience"
+    else:
+        return render_template('arbitration.html')
 
 
 if __name__ == '__main__':
