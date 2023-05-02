@@ -16,11 +16,11 @@ contract ImageTransformations {
     address payable public serverAddress;
     
     event TransformationLogged(string indexed imageId, string log, address ownerAddress, uint256 amountSent);
+    event ImageUploaded(string indexed imageId, address uploader, uint256 amountSent);
     
     constructor() {
         message = "Hello, World!";
-        // copy the first account address from the ganache-cli output and paste below
-        serverAddress = payable(0x098224edd0c93A3Cdd6988a80d4681Ef0E3976ed);
+        serverAddress = payable(0xACcFC8E4FDBd53dd8f48867D0B4052C8419F05D4);
     }
     
     function greet() public view returns (string memory){
@@ -42,5 +42,14 @@ contract ImageTransformations {
         transformations[_imageId] = Transformation(_log, _ownerAddress, _imageId);
         
         emit TransformationLogged(_imageId, _log, _ownerAddress, ownerCut);
+    }
+
+    function logImageUpload(string memory _imageId) public payable {
+        require(msg.value > 0, "You must send some currency to log an image upload.");
+        
+        (bool success,) = serverAddress.call{value: msg.value}("");
+        require(success, "Failed to send funds to server address.");
+        
+        emit ImageUploaded(_imageId, msg.sender, msg.value);
     }
 }

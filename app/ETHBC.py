@@ -4,9 +4,9 @@ from web3 import Web3
 # Fill in your infura API key here
 ganache_url = "http://127.0.0.1:8545"
 web3 = Web3(Web3.HTTPProvider(ganache_url))
-web3.eth.default_account = web3.eth.accounts[0]
+web3.eth.default_account = web3.eth.accounts[2]
 # copy the contract address after deploying contract on ganache-cli-blockchain and paste below
-contract_id = "0x452022e8b911eDa3891FA813404D037aCaA3671A"
+contract_id = "0x32772Da968dADD92A2B9D2A4C21342ac6144Db9C"
 contract_address = web3.to_checksum_address(contract_id)
 # OMG Address
 abi = json.loads('''

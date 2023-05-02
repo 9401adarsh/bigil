@@ -34,7 +34,11 @@ def hello_world():
         if img.getexif() == {}:
             return "Image has no EXIF data, Invalid Image"
         img_for_exif = ei(io.BytesIO(image_bytes))
-        sig_validity = verify_signature(img_name, img_for_exif)
+        # print(img_for_exif.list_all())
+        if img_for_exif.list_all().__contains__('copyright'):
+            sig_validity = verify_signature(img_name, img_for_exif)
+        else:
+            return "Image has no copyright info, Invalid Image."
         print(img_for_exif.list_all())
         if sig_validity:
             candidate_img, comparison_metric, equal_sig_flag = hash_comparison(
@@ -69,6 +73,8 @@ def hello_world():
                         data = io.BytesIO()
                         candidate_img.save(data, candidate_img.format)
                         encoded_img_data = base64.b64encode(data.getvalue())
+                        owner_addr = request.cookies.get('userWallet')
+                        store_owner_info(owner_addr, img_name)
                         return render_template('index.html', img_data=encoded_img_data.decode('utf-8'), img_name=candidate_img_fname)
                         # return "Same image uploaded before, cant be uploaded again, here is link of orig img"
                     else:
