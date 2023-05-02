@@ -6,7 +6,7 @@ ganache_url = "http://127.0.0.1:8545"
 web3 = Web3(Web3.HTTPProvider(ganache_url))
 web3.eth.default_account = web3.eth.accounts[0]
 # copy the contract address after deploying contract on ganache-cli-blockchain and paste below
-contract_id = "0x538a59d9168fcAa72B0629405898e0aB0383A7B4"
+contract_id = "0x59A9d4B0f4b7fA4c64a5C87A95dA3DDEdC962Ee9"
 contract_address = web3.to_checksum_address(contract_id)
 # OMG Address
 abi = json.loads('''
@@ -40,6 +40,27 @@ abi = json.loads('''
 		],
 		"name": "DisputeResolved",
 		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "resolve_dispute",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "resolve_success",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "stake",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
 	},
 	{
 		"anonymous": false,
@@ -81,20 +102,6 @@ abi = json.loads('''
 	},
 	{
 		"inputs": [],
-		"name": "resolve_dispute",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "resolve_success",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
 		"name": "server",
 		"outputs": [
 			{
@@ -104,13 +111,6 @@ abi = json.loads('''
 			}
 		],
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "stake",
-		"outputs": [],
-		"stateMutability": "payable",
 		"type": "function"
 	},
 	{

@@ -9,7 +9,7 @@ class arbitrationZok:
         self.cwd = cwd if cwd is not None else os.getcwd()
         self.zokFilePath = cwd + '/' + zokFilename
         subprocess.run(["zokrates", "compile", "-i", self.zokFilePath])
-        subprocess.run(["zokrates", "setup"], cwd=self.cwd)
+        subprocess.run(["zokrates", "setup"])
         pass
 
     def setup(self):
@@ -50,8 +50,9 @@ class arbitrationZok:
             subprocess.run(["bash", os.getcwd() + "/flush.sh"])
             return False, None
         self.genProof()
-        proofPath = './proof.json'
-        print(proofPath)
+        proofPath = 'proof.json'
+        ##print(os.getcwd())
+        ##print(proofPath)
         proofJSON = json.load(open(proofPath, 'r'))
         ##print(proofJSON)
         answer = self.verifyProof()
